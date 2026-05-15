@@ -1,10 +1,6 @@
-import { Hono } from 'hono'
+import { Hono } from 'hono';
 
-const app = new Hono()
-
-app.get('/', (c) => {
-  console.log('auth route')
-  return c.text('auth')
-})
-
-export const auth = app;
+export const auth = new Hono().get('/', (c) => {
+  console.log('auth route');
+  return c.text('auth');
+});

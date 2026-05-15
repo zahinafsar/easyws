@@ -16,4 +16,5 @@ export const env = {
     awsRegion: key("AWS_REGION").required(),
     awsAccesskey: key("AWS_ACCESS_KEY").required(),
     awsSecretKey: key("AWS_SECRET_KEY").required(),
+    cloudfrontUrl: key("CLOUDFRONT_URL").required(),
 }

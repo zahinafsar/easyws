@@ -11,5 +11,9 @@
     "dev:server": "npm run dev -w @easyws/server",
     "dev:client": "npm run dev -w @easyws/client",
     "build": "npm run build --workspaces --if-present"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cloudfront": "^3.1047.0",
+    "@aws-sdk/s3-request-presigner": "^3.1047.0"
   }
 }
