@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib/core';
 import { Construct } from 'constructs';
-import * as ApiGateway from 'aws-cdk-lib/aws-apigateway';
+import { LambdaRestApi, LambdaIntegration } from 'aws-cdk-lib/aws-apigateway';
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
 
 export class ApiStack extends cdk.Stack {
@@ -9,9 +9,25 @@ export class ApiStack extends cdk.Stack {
 
     if (!props?.handler) throw Error("Lambda handler required!")
 
-    new ApiGateway.LambdaRestApi(this, 'storage', {
+    const api = new LambdaRestApi(this, 'storage', {
       handler: props?.handler,
-      restApiName: 'get',
+      restApiName: 'storage',
+      proxy: false,
+      binaryMediaTypes: ['multipart/form-data']
     })
+
+    const folders = api.root.addResource('folder');
+    folders.addMethod('GET', new LambdaIntegration(props?.handler))
+    folders.addMethod('POST', new LambdaIntegration(props?.handler))
+
+    const folder = folders.addResource('{folderName}');
+    folder.addMethod('GET', new LambdaIntegration(props?.handler))
+    folder.addMethod('POST', new LambdaIntegration(props?.handler))
+    folder.addMethod('PUT', new LambdaIntegration(props?.handler))
+    folder.addMethod('DELETE', new LambdaIntegration(props?.handler))
+
+    const media = folder.addResource('{mediaId}')
+    media.addMethod('GET', new LambdaIntegration(props?.handler))
+    media.addMethod('DELETE', new LambdaIntegration(props?.handler))
   }
 }

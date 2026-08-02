@@ -5,4 +5,4 @@ import { ApiStack } from './api';
 
 const app = new cdk.App();
 const storageLambda = new LambdaStack(app, 'LambdaStack');
-new ApiStack(app, 'ApiStack', { handler: storageLambda.get })
+new ApiStack(app, 'ApiStack', { handler: storageLambda.handler })

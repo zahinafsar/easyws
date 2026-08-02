@@ -1,0 +1,60 @@
+@baseUrl = https://llicm1hhua.execute-api.us-east-1.amazonaws.com/prod
+@folderName = new-folder-001
+@renamedFolderName = new-folder-002
+@mediaId = replace-with-media-id
+
+GET {{baseUrl}}/folder
+Accept: application/json
+
+###
+
+POST {{baseUrl}}/folder
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "{{folderName}}"
+}
+
+###
+
+GET {{baseUrl}}/folder/{{folderName}}
+Accept: application/json
+
+###
+
+POST {{baseUrl}}/folder/{{folderName}}
+Content-Type: multipart/form-data; boundary=EasyWSBoundary
+Accept: application/json
+
+--EasyWSBoundary
+Content-Disposition: form-data; name="file"; filename="sample.txt"
+Content-Type: text/plain
+
+EasyWS upload request
+--EasyWSBoundary--
+
+###
+
+PUT {{baseUrl}}/folder/{{folderName}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "{{renamedFolderName}}"
+}
+
+###
+
+DELETE {{baseUrl}}/folder/{{folderName}}
+Accept: application/json
+
+###
+
+GET {{baseUrl}}/folder/{{folderName}}/{{mediaId}}
+Accept: application/json
+
+###
+
+DELETE {{baseUrl}}/folder/{{folderName}}/{{mediaId}}
+Accept: application/json
