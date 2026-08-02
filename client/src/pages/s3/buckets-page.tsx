@@ -29,11 +29,7 @@ import { toast } from '@/components/ui/toast'
 function useBuckets() {
   return useQuery({
     queryKey: ['s3', 'buckets'],
-    queryFn: async () => {
-      const res = await api.s3.projects.$get()
-      if (!res.ok) throw new Error('Failed to load buckets')
-      return res.json()
-    },
+    queryFn: api.listFolders,
   })
 }
 
@@ -45,9 +41,7 @@ export function BucketsPage() {
 
   const create = useMutation({
     mutationFn: async (bucketName: string) => {
-      const res = await api.s3.projects.$post({ json: { name: bucketName } })
-      if (!res.ok) throw new Error(await res.text())
-      return res.json()
+      return api.createFolder(bucketName)
     },
     onSuccess: () => {
       toast({ variant: 'success', title: 'Bucket created' })
@@ -60,9 +54,7 @@ export function BucketsPage() {
 
   const remove = useMutation({
     mutationFn: async (bucketName: string) => {
-      const res = await api.s3.projects.$delete({ json: { name: bucketName } })
-      if (!res.ok) throw new Error(await res.text())
-      return res.json()
+      return api.deleteFolder(bucketName)
     },
     onSuccess: () => {
       toast({ variant: 'success', title: 'Bucket deleted' })

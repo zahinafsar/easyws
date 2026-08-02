@@ -7,6 +7,7 @@ export class Response {
             statusCode: status,
             headers: {
                 'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
             },
             body: JSON.stringify(res),
         }

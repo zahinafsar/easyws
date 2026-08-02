@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib/core';
 import { Construct } from 'constructs';
-import { LambdaRestApi, LambdaIntegration } from 'aws-cdk-lib/aws-apigateway';
+import { Cors, LambdaRestApi, LambdaIntegration } from 'aws-cdk-lib/aws-apigateway';
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
 
 export class ApiStack extends cdk.Stack {
@@ -13,7 +13,11 @@ export class ApiStack extends cdk.Stack {
       handler: props?.handler,
       restApiName: 'storage',
       proxy: false,
-      binaryMediaTypes: ['multipart/form-data']
+      binaryMediaTypes: ['multipart/form-data'],
+      defaultCorsPreflightOptions: {
+        allowOrigins: Cors.ALL_ORIGINS,
+        allowMethods: Cors.ALL_METHODS,
+      },
     })
 
     const folders = api.root.addResource('folder');

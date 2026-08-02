@@ -79,22 +79,13 @@ export function BucketPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['s3', 'bucket', name],
-    queryFn: async () => {
-      const res = await api.s3.projects[':name'].$get({ param: { name } })
-      if (!res.ok) throw new Error('Failed to load objects')
-      return res.json()
-    },
+    queryFn: () => api.listMedia(name),
     enabled: !!name,
   })
 
   const upload = useMutation({
     mutationFn: async (file: File) => {
-      const res = await api.s3.projects[':name'].$post({
-        param: { name },
-        form: { file },
-      })
-      if (!res.ok) throw new Error(await res.text())
-      return res.json()
+      return api.uploadMedia(name, file)
     },
     onSuccess: () => {
       toast({ variant: 'success', title: 'File uploaded' })
@@ -106,11 +97,7 @@ export function BucketPage() {
 
   const removeObject = useMutation({
     mutationFn: async (key: string) => {
-      const res = await api.s3.projects[':name'].objects[':key'].$delete({
-        param: { name, key },
-      })
-      if (!res.ok) throw new Error(await res.text())
-      return res.json()
+      return api.deleteMedia(name, key)
     },
     onSuccess: () => {
       toast({ variant: 'success', title: 'Object deleted' })
