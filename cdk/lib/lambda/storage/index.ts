@@ -5,7 +5,7 @@ import * as Iam from 'aws-cdk-lib/aws-iam';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as path from 'path';
 
-export class LambdaStack extends cdk.Stack {
+export class StorageLambdaStack extends cdk.Stack {
     handler: Lambda.IFunction;
 
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {

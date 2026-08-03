@@ -2,9 +2,9 @@ import type {
     APIGatewayProxyEvent,
 } from 'aws-lambda';
 import { S3ServiceException } from '@aws-sdk/client-s3';
-import { parseBody, parseUpload, Response } from '../utils/api';
+import { parseBody, parseUpload, Response } from '../../utils/api';
 import z from 'zod';
-import { S3Service } from '../service/s3';
+import { S3Service } from '../../service/s3';
 
 const listFolders = async () => {
     const s3 = new S3Service();

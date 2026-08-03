@@ -1,17 +1,19 @@
 import * as cdk from 'aws-cdk-lib/core';
 import { Construct } from 'constructs';
-import { Cors, LambdaRestApi, LambdaIntegration } from 'aws-cdk-lib/aws-apigateway';
+import { Cors, LambdaRestApi } from 'aws-cdk-lib/aws-apigateway';
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
+import { StorageApi } from './storage';
+import { ProjectApi } from './project';
 
 export class ApiStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps & { handler: IFunction }) {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps & { storageHandler: IFunction, projectHandler: IFunction }) {
     super(scope, id, props);
 
-    if (!props?.handler) throw Error("Lambda handler required!")
+    if (!props?.storageHandler) throw Error("Lambda handler required!")
 
-    const api = new LambdaRestApi(this, 'storage', {
-      handler: props?.handler,
-      restApiName: 'storage',
+    const api = new LambdaRestApi(this, 'easyws', {
+      handler: props?.storageHandler,
+      restApiName: 'easyws',
       proxy: false,
       binaryMediaTypes: ['multipart/form-data'],
       defaultCorsPreflightOptions: {
@@ -20,18 +22,9 @@ export class ApiStack extends cdk.Stack {
       },
     })
 
-    const folders = api.root.addResource('folder');
-    folders.addMethod('GET', new LambdaIntegration(props?.handler))
-    folders.addMethod('POST', new LambdaIntegration(props?.handler))
+    const router = api.root.addResource('easyws');
 
-    const folder = folders.addResource('{folderName}');
-    folder.addMethod('GET', new LambdaIntegration(props?.handler))
-    folder.addMethod('POST', new LambdaIntegration(props?.handler))
-    folder.addMethod('PUT', new LambdaIntegration(props?.handler))
-    folder.addMethod('DELETE', new LambdaIntegration(props?.handler))
-
-    const media = folder.addResource('{mediaId}')
-    media.addMethod('GET', new LambdaIntegration(props?.handler))
-    media.addMethod('DELETE', new LambdaIntegration(props?.handler))
+    new StorageApi(router, props.storageHandler)
+    new ProjectApi(router, props.projectHandler)
   }
 }
