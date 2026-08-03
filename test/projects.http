@@ -1,0 +1,25 @@
+@baseUrl = https://zv38f6s6t3.execute-api.us-east-1.amazonaws.com/prod
+@projectId = replace-with-project-id
+
+GET {{baseUrl}}/projects
+Accept: application/json
+
+###
+
+POST {{baseUrl}}/projects
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "My Next.js App"
+}
+
+###
+
+DELETE {{baseUrl}}/projects
+Content-Type: application/json
+Accept: application/json
+
+{
+  "id": "{{projectId}}"
+}

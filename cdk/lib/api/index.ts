@@ -22,9 +22,7 @@ export class ApiStack extends cdk.Stack {
       },
     })
 
-    const router = api.root.addResource('easyws');
-
-    new StorageApi(router, props.storageHandler)
-    new ProjectApi(router, props.projectHandler)
+    new StorageApi(api, props.storageHandler)
+    new ProjectApi(api, props.projectHandler)
   }
 }

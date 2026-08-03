@@ -3,7 +3,7 @@ import type {
 } from 'aws-lambda';
 import { S3ServiceException } from '@aws-sdk/client-s3';
 import { parseBody, parseUpload, Response } from '../../utils/api';
-import z from 'zod';
+import { z } from 'zod/mini';
 import { S3Service } from '../../service/s3';
 
 const listFolders = async () => {

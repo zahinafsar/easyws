@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import 'dotenv/config';
 import * as cdk from 'aws-cdk-lib/core';
 import { StorageLambdaStack } from './lambda/storage';
 import { ApiStack } from './api';

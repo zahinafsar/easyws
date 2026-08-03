@@ -5,13 +5,17 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.152",
     "@types/jest": "^30",
     "@types/node": "^24.12.4",
     "aws-cdk": "2.1124.1",
+    "drizzle-kit": "^0.31.10",
     "esbuild": "^0.28.0",
     "jest": "^30",
     "ts-jest": "^29",
@@ -23,6 +27,9 @@
     "@aws-sdk/s3-request-presigner": "^3.1047.0",
     "aws-cdk-lib": "^2.255.0",
     "constructs": "^10.5.0",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "postgres": "^3.4.9",
     "zod": "^4.4.3"
   }
 }

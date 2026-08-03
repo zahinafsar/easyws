@@ -1,4 +1,4 @@
-@baseUrl = https://llicm1hhua.execute-api.us-east-1.amazonaws.com/prod
+@baseUrl = https://zv38f6s6t3.execute-api.us-east-1.amazonaws.com/prod
 @folderName = new-folder-001
 @renamedFolderName = new-folder-002
 @mediaId = replace-with-media-id

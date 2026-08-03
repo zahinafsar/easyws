@@ -1,5 +1,5 @@
 import type { APIGatewayProxyEvent } from 'aws-lambda';
-import z from "zod"
+import { z } from "zod/mini"
 
 export class Response {
     constructor(status: number, res: any) {
@@ -14,7 +14,7 @@ export class Response {
     }
 }
 
-export const parseBody = <T extends z.ZodObject>(body: any, schema: T) => {
+export const parseBody = <T extends z.ZodMiniObject>(body: any, schema: T) => {
     try {
         return schema.parse(typeof body === 'string' ? JSON.parse(body) : body) as z.infer<T>
     } catch (error) {

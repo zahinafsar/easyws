@@ -1,9 +1,9 @@
-import { LambdaIntegration, Resource } from 'aws-cdk-lib/aws-apigateway';
+import { LambdaIntegration, LambdaRestApi } from 'aws-cdk-lib/aws-apigateway';
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
 
 export class StorageApi {
-    constructor(api: Resource, handler: IFunction) {
-        const folders = api.addResource('folder');
+    constructor(api: LambdaRestApi, handler: IFunction) {
+        const folders = api.root.addResource('folder');
         folders.addMethod('GET', new LambdaIntegration(handler))
         folders.addMethod('POST', new LambdaIntegration(handler))
 
