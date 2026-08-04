@@ -5,9 +5,13 @@ import { StorageLambdaStack } from './lambda/storage';
 import { ApiStack } from './api';
 import { ProjectLambdaStack } from './lambda/project';
 import { CodeBuildStack } from './codebuild';
+import { ECRStack } from './ecr';
 
 const app = new cdk.App();
-const codeBuild = new CodeBuildStack(app, 'CodeBuildStack');
+const ecr = new ECRStack(app, 'ECR');
+const codeBuild = new CodeBuildStack(app, 'CodeBuildStack', {
+    repository: ecr.repository
+});
 const storageLambda = new StorageLambdaStack(app, 'StorageLambdaStack');
 const projectLambda = new ProjectLambdaStack(app, 'ProjectLambdaStack', {
     buildProject: codeBuild.project,

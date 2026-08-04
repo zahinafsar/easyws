@@ -34,7 +34,7 @@ export function AppShell() {
             {({ isActive }) => (
               <SidebarItem
                 icon={<Database className="h-4 w-4" />}
-                label="S3"
+                label="Storage"
                 active={isActive || pathname.startsWith('/s3')}
               />
             )}
@@ -42,7 +42,7 @@ export function AppShell() {
           <div className="opacity-60 pointer-events-none">
             <SidebarItem
               icon={<Zap className="h-4 w-4" />}
-              label="Lambda · Soon"
+              label="Function (Coming Soon)"
             />
           </div>
         </SidebarContent>

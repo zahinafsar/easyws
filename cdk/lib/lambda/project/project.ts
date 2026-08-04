@@ -1,4 +1,5 @@
 import type { APIGatewayProxyEvent } from 'aws-lambda';
+import { randomUUID } from 'node:crypto';
 import {
     BatchGetBuildsCommand,
     CodeBuildClient,
@@ -122,12 +123,18 @@ const createBuild = async (event: APIGatewayProxyEvent) => {
         });
     }
 
+    const buildId = randomUUID();
     const result = await codeBuild.send(new StartBuildCommand({
         projectName: config.codeBuildProjectName,
         environmentVariablesOverride: [
             {
                 name: 'REPOSITORY_URL',
                 value: project.repositoryUrl,
+                type: 'PLAINTEXT',
+            },
+            {
+                name: 'IMAGE_TAG',
+                value: buildId,
                 type: 'PLAINTEXT',
             },
         ],
@@ -140,6 +147,7 @@ const createBuild = async (event: APIGatewayProxyEvent) => {
     }
 
     const [build] = await database.insert(builds).values({
+        id: buildId,
         projectId,
         codeBuildBuildId: result.build.id,
         status: result.build.buildStatus,
