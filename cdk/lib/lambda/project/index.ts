@@ -30,5 +30,12 @@ export class ProjectLambdaStack extends cdk.Stack {
             actions: ['codebuild:StartBuild', 'codebuild:BatchGetBuilds'],
             resources: [props.buildProject.projectArn],
         }))
+
+        this.handler.addToRolePolicy(new Iam.PolicyStatement({
+            actions: ['logs:GetLogEvents'],
+            resources: [
+                `arn:${cdk.Aws.PARTITION}:logs:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:log-group:/aws/codebuild/${config.codeBuildProjectName}:*`,
+            ],
+        }))
     }
 }

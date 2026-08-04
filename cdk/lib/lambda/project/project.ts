@@ -1,13 +1,16 @@
-import type {
-    APIGatewayProxyEvent,
-} from 'aws-lambda';
+import type { APIGatewayProxyEvent } from 'aws-lambda';
 import {
     BatchGetBuildsCommand,
     CodeBuildClient,
     CodeBuildServiceException,
     StartBuildCommand,
 } from '@aws-sdk/client-codebuild';
-import { and, eq } from 'drizzle-orm';
+import {
+    CloudWatchLogsClient,
+    CloudWatchLogsServiceException,
+    GetLogEventsCommand,
+} from '@aws-sdk/client-cloudwatch-logs';
+import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod/mini';
 import { database } from '../../database';
 import { builds, projects } from '../../database/schema';
@@ -15,6 +18,17 @@ import { parseBody, Response } from '../../utils/api';
 import { config } from '../../utils/env';
 
 const codeBuild = new CodeBuildClient({});
+const cloudWatchLogs = new CloudWatchLogsClient({});
+
+const findProject = async (projectId: string) => {
+    const [project] = await database
+        .select()
+        .from(projects)
+        .where(eq(projects.id, projectId))
+        .limit(1);
+
+    return project;
+}
 
 const findBuild = async (projectId: string, buildId: string) => {
     const [build] = await database
@@ -34,9 +48,23 @@ const listProjects = async () => {
     return new Response(200, result);
 }
 
+const getProject = async (event: APIGatewayProxyEvent) => {
+    const projectId = z.uuid().parse(event.pathParameters?.projectId);
+    const project = await findProject(projectId);
+
+    if (!project) {
+        return new Response(404, {
+            message: 'Project not found',
+        });
+    }
+
+    return new Response(200, project);
+}
+
 const createProject = async (event: APIGatewayProxyEvent) => {
     const body = parseBody(event.body, z.object({
-        name: z.string(),
+        name: z.string().check(z.minLength(1)),
+        repositoryUrl: z.url().check(z.startsWith('https://github.com/')),
     }));
     const [project] = await database.insert(projects).values(body).returning();
 
@@ -59,18 +87,47 @@ const deleteProject = async (event: APIGatewayProxyEvent) => {
     return new Response(200, project);
 }
 
+const listBuilds = async (event: APIGatewayProxyEvent) => {
+    const projectId = z.uuid().parse(event.pathParameters?.projectId);
+    const project = await findProject(projectId);
+
+    if (!project) {
+        return new Response(404, {
+            message: 'Project not found',
+        });
+    }
+
+    const result = await database
+        .select({
+            buildId: builds.id,
+            projectId: builds.projectId,
+            status: builds.status,
+            createdAt: builds.createdAt,
+            completedAt: builds.completedAt,
+        })
+        .from(builds)
+        .where(eq(builds.projectId, projectId))
+        .orderBy(desc(builds.createdAt));
+
+    return new Response(200, result);
+}
+
 const createBuild = async (event: APIGatewayProxyEvent) => {
     const projectId = z.uuid().parse(event.pathParameters?.projectId);
-    const body = parseBody(event.body, z.object({
-        repositoryUrl: z.url().check(z.startsWith('https://github.com/')),
-    }));
+    const project = await findProject(projectId);
+
+    if (!project) {
+        return new Response(404, {
+            message: 'Project not found',
+        });
+    }
 
     const result = await codeBuild.send(new StartBuildCommand({
         projectName: config.codeBuildProjectName,
         environmentVariablesOverride: [
             {
                 name: 'REPOSITORY_URL',
-                value: body.repositoryUrl,
+                value: project.repositoryUrl,
                 type: 'PLAINTEXT',
             },
         ],
@@ -85,7 +142,6 @@ const createBuild = async (event: APIGatewayProxyEvent) => {
     const [build] = await database.insert(builds).values({
         projectId,
         codeBuildBuildId: result.build.id,
-        repositoryUrl: body.repositoryUrl,
         status: result.build.buildStatus,
     }).returning();
 
@@ -97,8 +153,7 @@ const createBuild = async (event: APIGatewayProxyEvent) => {
 
 const getBuild = async (event: APIGatewayProxyEvent) => {
     const projectId = z.uuid().parse(event.pathParameters?.projectId);
-    const buildId = z.uuid().parse(event.queryStringParameters?.buildId);
-
+    const buildId = z.uuid().parse(event.pathParameters?.buildId);
     const buildRecord = await findBuild(projectId, buildId);
 
     if (!buildRecord) {
@@ -129,11 +184,55 @@ const getBuild = async (event: APIGatewayProxyEvent) => {
     return new Response(200, {
         buildId: buildRecord.id,
         projectId,
-        repositoryUrl: buildRecord.repositoryUrl,
         status,
         createdAt: buildRecord.createdAt,
         completedAt,
-        logsUrl: build.logs?.deepLink,
+    });
+}
+
+const getBuildLogs = async (event: APIGatewayProxyEvent) => {
+    const projectId = z.uuid().parse(event.pathParameters?.projectId);
+    const buildId = z.uuid().parse(event.pathParameters?.buildId);
+    const buildRecord = await findBuild(projectId, buildId);
+
+    if (!buildRecord) {
+        return new Response(404, {
+            message: 'Build not found',
+        });
+    }
+
+    const buildResult = await codeBuild.send(new BatchGetBuildsCommand({
+        ids: [buildRecord.codeBuildBuildId],
+    }));
+    const [build] = buildResult.builds ?? [];
+    const groupName = build?.logs?.groupName;
+    const streamName = build?.logs?.streamName;
+
+    if (!groupName || !streamName) {
+        return new Response(200, {
+            events: [],
+        });
+    }
+
+    const currentToken = event.queryStringParameters?.nextToken;
+    const result = await cloudWatchLogs.send(new GetLogEventsCommand({
+        logGroupName: groupName,
+        logStreamName: streamName,
+        nextToken: currentToken,
+        startFromHead: true,
+        limit: 10000,
+    }));
+    const events = (result.events ?? []).map(logEvent => ({
+        timestamp: logEvent.timestamp,
+        message: logEvent.message ?? '',
+    }));
+    const nextToken = events.length > 0 && result.nextForwardToken !== currentToken
+        ? result.nextForwardToken
+        : undefined;
+
+    return new Response(200, {
+        events,
+        nextToken,
     });
 }
 
@@ -147,10 +246,13 @@ exports.handler = async (event: APIGatewayProxyEvent) => {
             if (event.requestContext.httpMethod === 'POST') {
                 return await createProject(event);
             }
-
         }
 
         if (event.requestContext.resourcePath === '/projects/{projectId}') {
+            if (event.requestContext.httpMethod === 'GET') {
+                return await getProject(event);
+            }
+
             if (event.requestContext.httpMethod === 'DELETE') {
                 return await deleteProject(event);
             }
@@ -158,7 +260,7 @@ exports.handler = async (event: APIGatewayProxyEvent) => {
 
         if (event.requestContext.resourcePath === '/projects/{projectId}/builds') {
             if (event.requestContext.httpMethod === 'GET') {
-                return await getBuild(event);
+                return await listBuilds(event);
             }
 
             if (event.requestContext.httpMethod === 'POST') {
@@ -166,18 +268,33 @@ exports.handler = async (event: APIGatewayProxyEvent) => {
             }
         }
 
+        if (event.requestContext.resourcePath === '/projects/{projectId}/builds/{buildId}') {
+            if (event.requestContext.httpMethod === 'GET') {
+                return await getBuild(event);
+            }
+        }
+
+        if (event.requestContext.resourcePath === '/projects/{projectId}/builds/{buildId}/logs') {
+            if (event.requestContext.httpMethod === 'GET') {
+                return await getBuildLogs(event);
+            }
+        }
+
         return new Response(404, {
-            message: "API not available",
+            message: 'API not available',
         })
     } catch (error) {
-        if (error instanceof CodeBuildServiceException) {
+        if (
+            error instanceof CodeBuildServiceException ||
+            error instanceof CloudWatchLogsServiceException
+        ) {
             return new Response(error.$metadata.httpStatusCode ?? 500, {
                 message: error.message,
             })
         }
 
         return new Response(400, {
-            message: error instanceof Error ? error.message : "Invalid request",
+            message: error instanceof Error ? error.message : 'Invalid request',
         })
     }
 };

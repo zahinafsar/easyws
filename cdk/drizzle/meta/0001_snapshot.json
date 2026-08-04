@@ -27,12 +27,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "repository_url": {
-          "name": "repository_url",
-          "type": "varchar(2048)",
-          "primaryKey": false,
-          "notNull": true
-        },
         "status": {
           "name": "status",
           "type": "varchar(32)",
@@ -97,6 +91,12 @@
         "name": {
           "name": "name",
           "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "repository_url": {
+          "name": "repository_url",
+          "type": "varchar(2048)",
           "primaryKey": false,
           "notNull": true
         }

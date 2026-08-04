@@ -24,6 +24,30 @@ type ErrorResponse = {
   message: string
 }
 
+export type Project = {
+  id: string
+  name: string
+  repositoryUrl: string
+}
+
+export type ProjectBuild = {
+  buildId: string
+  projectId: string
+  status: string
+  createdAt: string
+  completedAt?: string | null
+}
+
+export type BuildLogEvent = {
+  timestamp?: number
+  message: string
+}
+
+export type BuildLogsResponse = {
+  events: BuildLogEvent[]
+  nextToken?: string
+}
+
 const rawApiUrl = import.meta.env.VITE_API_URL
 
 if (typeof rawApiUrl !== 'string' || rawApiUrl.trim() === '') {
@@ -75,7 +99,50 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
 const folderPath = (folderName: string) =>
   `/folder/${encodeURIComponent(folderName)}`
 
+const projectPath = (projectId: string) =>
+  `/projects/${encodeURIComponent(projectId)}`
+
+const buildPath = (projectId: string, buildId: string) =>
+  `${projectPath(projectId)}/builds/${encodeURIComponent(buildId)}`
+
 export const api = {
+  listProjects: () => request<Project[]>('/projects'),
+  getProject: (projectId: string) =>
+    request<Project>(projectPath(projectId)),
+  createProject: (name: string, repositoryUrl: string) =>
+    request<Project>('/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, repositoryUrl }),
+    }),
+  deleteProject: (projectId: string) =>
+    request<Project>(projectPath(projectId), {
+      method: 'DELETE',
+    }),
+  listBuilds: (projectId: string) =>
+    request<ProjectBuild[]>(`${projectPath(projectId)}/builds`),
+  createBuild: (projectId: string) =>
+    request<{ buildId: string; status: string }>(
+      `${projectPath(projectId)}/builds`,
+      {
+        method: 'POST',
+      },
+    ),
+  getBuild: (projectId: string, buildId: string) =>
+    request<ProjectBuild>(buildPath(projectId, buildId)),
+  getBuildLogs: (
+    projectId: string,
+    buildId: string,
+    nextToken?: string,
+  ) => {
+    const query = nextToken
+      ? `?${new URLSearchParams({ nextToken }).toString()}`
+      : ''
+
+    return request<BuildLogsResponse>(
+      `${buildPath(projectId, buildId)}/logs${query}`,
+    )
+  },
   listFolders: () => request<ListFoldersResponse>('/folder'),
   createFolder: (name: string) =>
     request<{ message: string }>('/folder', {

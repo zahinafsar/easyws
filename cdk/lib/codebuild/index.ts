@@ -24,12 +24,13 @@ export class CodeBuildStack extends cdk.Stack {
                             'git clone --depth 1 "$REPOSITORY_URL" source',
                             'test -f source/package.json',
                             'test -f source/package-lock.json',
-                            'cd source && npm ci',
+                            'cd source',
+                            'npm ci'
                         ],
                     },
                     build: {
                         commands: [
-                            'cd source && npm run build',
+                            'npm run build',
                         ],
                     },
                 },

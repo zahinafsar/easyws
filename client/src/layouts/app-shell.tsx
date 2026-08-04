@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { Database, Zap } from 'lucide-react'
+import { Boxes, Database, Zap } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -21,6 +21,15 @@ export function AppShell() {
           </div>
         </SidebarHeader>
         <SidebarContent>
+          <NavLink to="/projects" className="contents">
+            {({ isActive }) => (
+              <SidebarItem
+                icon={<Boxes className="h-4 w-4" />}
+                label="Projects"
+                active={isActive || pathname.startsWith('/projects')}
+              />
+            )}
+          </NavLink>
           <NavLink to="/s3" className="contents">
             {({ isActive }) => (
               <SidebarItem

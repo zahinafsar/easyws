@@ -3,6 +3,7 @@ import { pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 export const projects = pgTable('projects', {
     id: uuid('id').defaultRandom().primaryKey(),
     name: varchar('name', { length: 255 }).notNull(),
+    repositoryUrl: varchar('repository_url', { length: 2048 }).notNull(),
 });
 
 export const builds = pgTable('builds', {
@@ -11,7 +12,6 @@ export const builds = pgTable('builds', {
         .notNull()
         .references(() => projects.id, { onDelete: 'cascade' }),
     codeBuildBuildId: varchar('codebuild_build_id', { length: 255 }).notNull().unique(),
-    repositoryUrl: varchar('repository_url', { length: 2048 }).notNull(),
     status: varchar('status', { length: 32 }).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     completedAt: timestamp('completed_at', { withTimezone: true }),

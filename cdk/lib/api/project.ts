@@ -8,10 +8,17 @@ export class ProjectApi {
         projects.addMethod('POST', new LambdaIntegration(handler))
 
         const project = projects.addResource('{projectId}');
+        project.addMethod('GET', new LambdaIntegration(handler))
         project.addMethod('DELETE', new LambdaIntegration(handler))
 
         const builds = project.addResource('builds');
         builds.addMethod('GET', new LambdaIntegration(handler))
         builds.addMethod('POST', new LambdaIntegration(handler))
+
+        const build = builds.addResource('{buildId}');
+        build.addMethod('GET', new LambdaIntegration(handler))
+
+        const logs = build.addResource('logs');
+        logs.addMethod('GET', new LambdaIntegration(handler))
     }
 }
