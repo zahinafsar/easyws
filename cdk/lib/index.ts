@@ -4,11 +4,15 @@ import * as cdk from 'aws-cdk-lib/core';
 import { StorageLambdaStack } from './lambda/storage';
 import { ApiStack } from './api';
 import { ProjectLambdaStack } from './lambda/project';
+import { CodeBuildStack } from './codebuild';
 
 const app = new cdk.App();
+const codeBuild = new CodeBuildStack(app, 'CodeBuildStack');
 const storageLambda = new StorageLambdaStack(app, 'StorageLambdaStack');
-const ProjectLambda = new ProjectLambdaStack(app, 'ProjectLambdaStack');
+const projectLambda = new ProjectLambdaStack(app, 'ProjectLambdaStack', {
+    buildProject: codeBuild.project,
+});
 new ApiStack(app, 'ApiStack', {
     storageHandler: storageLambda.handler,
-    projectHandler: ProjectLambda.handler
+    projectHandler: projectLambda.handler
 })

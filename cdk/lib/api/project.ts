@@ -6,6 +6,12 @@ export class ProjectApi {
         const projects = api.root.addResource('projects');
         projects.addMethod('GET', new LambdaIntegration(handler))
         projects.addMethod('POST', new LambdaIntegration(handler))
-        projects.addMethod('DELETE', new LambdaIntegration(handler))
+
+        const project = projects.addResource('{projectId}');
+        project.addMethod('DELETE', new LambdaIntegration(handler))
+
+        const builds = project.addResource('builds');
+        builds.addMethod('GET', new LambdaIntegration(handler))
+        builds.addMethod('POST', new LambdaIntegration(handler))
     }
 }

@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { defineConfig } from 'drizzle-kit';
-import { getDatabaseUrl } from './lib/config/database-url';
+import { config } from './lib/utils/env';
 
 export default defineConfig({
     dialect: 'postgresql',
@@ -8,6 +8,6 @@ export default defineConfig({
     out: './drizzle',
     breakpoints: false,
     dbCredentials: {
-        url: getDatabaseUrl(),
+        url: config.databaseUrl,
     },
 });

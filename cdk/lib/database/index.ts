@@ -1,9 +1,9 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { getDatabaseUrl } from '../config/database-url';
+import { config } from '../utils/env';
 import * as schema from './schema';
 
-const client = postgres(getDatabaseUrl(), {
+const client = postgres(config.databaseUrl, {
     max: 1,
     prepare: false,
 });
