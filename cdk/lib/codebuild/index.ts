@@ -4,7 +4,7 @@ import * as Ec2 from 'aws-cdk-lib/aws-ec2';
 import * as Ecr from 'aws-cdk-lib/aws-ecr';
 import * as Iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
-import { config } from '../utils/env';
+import { Ec2HostStack } from '../ec2';
 
 export interface CodeBuildStackProps extends cdk.StackProps {
     repository: Ecr.Repository;
@@ -12,6 +12,7 @@ export interface CodeBuildStackProps extends cdk.StackProps {
 }
 
 export class CodeBuildStack extends cdk.Stack {
+    static readonly ProjectName = 'easyws-project-builder';
     readonly project: CodeBuild.Project;
 
     constructor(scope: Construct, id: string, props?: CodeBuildStackProps) {
@@ -20,7 +21,7 @@ export class CodeBuildStack extends cdk.Stack {
         if (!props?.repository) throw Error('Repository not found')
 
         this.project = new CodeBuild.Project(this, 'ProjectBuilder', {
-            projectName: config.codeBuildProjectName,
+            projectName: CodeBuildStack.ProjectName,
             environmentVariables: {
                 AWS_ACCOUNT_ID: {
                     value: cdk.Aws.ACCOUNT_ID,
@@ -32,7 +33,7 @@ export class CodeBuildStack extends cdk.Stack {
                     value: props.hostInstance.instanceId,
                 },
                 CONTAINER_PORT: {
-                    value: String(config.containerPort),
+                    value: String(Ec2HostStack.ContainerPort),
                 },
             },
             buildSpec: CodeBuild.BuildSpec.fromObjectToYaml({
@@ -43,7 +44,7 @@ export class CodeBuildStack extends cdk.Stack {
                             'echo Logging in to Amazon ECR...',
                             'aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"',
                             'git clone --depth 1 "$REPOSITORY_URL" source',
-                            'test -f source/Dockerfile',
+                            'printf %s "$DOCKERFILE_B64" | base64 -d > source/Dockerfile',
                         ],
                     },
                     build: {

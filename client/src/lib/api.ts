@@ -28,7 +28,19 @@ export type Project = {
   id: string
   name: string
   repositoryUrl: string
+  port: number
 }
+
+export type ProjectSettings = {
+  installCommand: string
+  buildCommand: string
+  startCommand: string
+}
+
+export type ProjectDetail = Project &
+  ProjectSettings & {
+    envVars: string
+  }
 
 export type ProjectBuild = {
   buildId: string
@@ -108,7 +120,7 @@ const buildPath = (projectId: string, buildId: string) =>
 export const api = {
   listProjects: () => request<Project[]>('/projects'),
   getProject: (projectId: string) =>
-    request<Project>(projectPath(projectId)),
+    request<ProjectDetail>(projectPath(projectId)),
   createProject: (name: string, repositoryUrl: string) =>
     request<Project>('/projects', {
       method: 'POST',
@@ -119,6 +131,21 @@ export const api = {
     request<Project>(projectPath(projectId), {
       method: 'DELETE',
     }),
+  updateProject: (projectId: string, settings: ProjectSettings) =>
+    request<ProjectDetail>(projectPath(projectId), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    }),
+  updateProjectEnv: (projectId: string, content: string) =>
+    request<{ projectId: string; content: string }>(
+      `${projectPath(projectId)}/env`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      },
+    ),
   listBuilds: (projectId: string) =>
     request<ProjectBuild[]>(`${projectPath(projectId)}/builds`),
   createBuild: (projectId: string) =>

@@ -3,13 +3,16 @@ import * as Ec2 from 'aws-cdk-lib/aws-ec2';
 import * as Ecr from 'aws-cdk-lib/aws-ecr';
 import * as Iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
-import { config } from '../utils/env';
 
 export interface Ec2HostStackProps extends cdk.StackProps {
     repository: Ecr.Repository;
 }
 
 export class Ec2HostStack extends cdk.Stack {
+    static readonly PortRangeStart = 30000;
+    static readonly PortRangeEnd = 39999;
+    static readonly ContainerPort = 3000;
+
     readonly instance: Ec2.Instance;
     readonly elasticIp: Ec2.CfnEIP;
 
@@ -34,7 +37,7 @@ export class Ec2HostStack extends cdk.Stack {
 
         securityGroup.addIngressRule(
             Ec2.Peer.anyIpv4(),
-            Ec2.Port.tcpRange(config.appPortRangeStart, config.appPortRangeEnd),
+            Ec2.Port.tcpRange(Ec2HostStack.PortRangeStart, Ec2HostStack.PortRangeEnd),
             'Application containers',
         );
 

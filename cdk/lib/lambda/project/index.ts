@@ -6,7 +6,8 @@ import * as Ec2 from 'aws-cdk-lib/aws-ec2';
 import * as Iam from 'aws-cdk-lib/aws-iam';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as path from 'path';
-import { config } from '../../utils/env';
+import { CodeBuildStack } from '../../codebuild';
+import { Ec2HostStack } from '../../ec2';
 
 export interface ProjectLambdaStackProps extends cdk.StackProps {
     buildProject: CodeBuild.IProject;
@@ -24,8 +25,10 @@ export class ProjectLambdaStack extends cdk.Stack {
             entry: path.join(__dirname, 'project.ts'),
             handler: 'handler',
             environment: {
-                DATABASE_URL: config.databaseUrl,
+                DATABASE_URL: process.env.DATABASE_URL!,
                 INSTANCE_ID: props.hostInstance.instanceId,
+                CODEBUILD_PROJECT_NAME: CodeBuildStack.ProjectName,
+                CONTAINER_PORT: String(Ec2HostStack.ContainerPort),
             },
         })
 
@@ -37,7 +40,7 @@ export class ProjectLambdaStack extends cdk.Stack {
         this.handler.addToRolePolicy(new Iam.PolicyStatement({
             actions: ['logs:GetLogEvents'],
             resources: [
-                `arn:${cdk.Aws.PARTITION}:logs:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:log-group:/aws/codebuild/${config.codeBuildProjectName}:*`,
+                `arn:${cdk.Aws.PARTITION}:logs:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:log-group:/aws/codebuild/${CodeBuildStack.ProjectName}:*`,
             ],
         }))
 

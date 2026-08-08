@@ -1,4 +1,4 @@
-import { integer, pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { integer, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 
 export const projects = pgTable('projects', {
     id: uuid('id').defaultRandom().primaryKey(),
@@ -8,6 +8,16 @@ export const projects = pgTable('projects', {
         .generatedByDefaultAsIdentity({ startWith: 30000 })
         .notNull()
         .unique(),
+    envVars: text('env_vars').notNull().default(''),
+    installCommand: varchar('install_command', { length: 512 })
+        .notNull()
+        .default('npm install'),
+    buildCommand: varchar('build_command', { length: 512 })
+        .notNull()
+        .default('npm run build'),
+    startCommand: varchar('start_command', { length: 512 })
+        .notNull()
+        .default('npm start'),
 });
 
 export const builds = pgTable('builds', {

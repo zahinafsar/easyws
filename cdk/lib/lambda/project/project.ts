@@ -11,28 +11,28 @@ import {
     CloudWatchLogsServiceException,
     GetLogEventsCommand,
 } from '@aws-sdk/client-cloudwatch-logs';
-import { SendCommandCommand, SSMClient, SSMServiceException } from '@aws-sdk/client-ssm';
+import { SSMServiceException } from '@aws-sdk/client-ssm';
 import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod/mini';
 import { database } from '../../database';
 import { builds, projects } from '../../database/schema';
+import { SsmService } from '../../service/ssm';
 import { parseBody, Response } from '../../utils/api';
-import { config } from '../../utils/env';
+import { decodeBase64, encodeBase64 } from '../../utils/base64';
+import { renderDockerfile } from '../../utils/dockerfile';
+import { normalizeEnvVars } from '../../utils/env-vars';
 
 const codeBuild = new CodeBuildClient({});
 const cloudWatchLogs = new CloudWatchLogsClient({});
-const ssm = new SSMClient({});
+const ssm = new SsmService();
 
 const stopContainer = async (projectId: string) => {
     try {
-        await ssm.send(new SendCommandCommand({
-            InstanceIds: [config.hostInstanceId],
-            DocumentName: 'AWS-RunShellScript',
-            Comment: `easyws teardown ${projectId}`,
-            Parameters: {
-                commands: [`docker rm -f app-${projectId} 2>/dev/null || true`],
-            },
-        }));
+        await ssm.runShellScript({
+            instanceId: process.env.INSTANCE_ID!,
+            comment: `easyws teardown ${projectId}`,
+            commands: [`docker rm -f app-${projectId} 2>/dev/null || true`],
+        });
     } catch (error) {
         console.error('Failed to stop container', projectId, error);
     }
@@ -62,7 +62,15 @@ const findBuild = async (projectId: string, buildId: string) => {
 }
 
 const listProjects = async () => {
-    const result = await database.select().from(projects);
+    const result = await database
+        .select({
+            id: projects.id,
+            name: projects.name,
+            repositoryUrl: projects.repositoryUrl,
+            port: projects.port,
+        })
+        .from(projects);
+
     return new Response(200, result);
 }
 
@@ -76,7 +84,10 @@ const getProject = async (event: APIGatewayProxyEvent) => {
         });
     }
 
-    return new Response(200, project);
+    return new Response(200, {
+        ...project,
+        envVars: decodeBase64(project.envVars),
+    });
 }
 
 const createProject = async (event: APIGatewayProxyEvent) => {
@@ -87,6 +98,33 @@ const createProject = async (event: APIGatewayProxyEvent) => {
     const [project] = await database.insert(projects).values(body).returning();
 
     return new Response(201, project);
+}
+
+const command = z.string().check(z.maxLength(512), z.regex(/^[^\n\r]*$/));
+
+const updateProject = async (event: APIGatewayProxyEvent) => {
+    const projectId = z.uuid().parse(event.pathParameters?.projectId);
+    const body = parseBody(event.body, z.object({
+        installCommand: command,
+        buildCommand: command,
+        startCommand: z.string().check(z.minLength(1), z.maxLength(512), z.regex(/^[^\n\r]*$/)),
+    }));
+    const [project] = await database
+        .update(projects)
+        .set(body)
+        .where(eq(projects.id, projectId))
+        .returning();
+
+    if (!project) {
+        return new Response(404, {
+            message: 'Project not found',
+        });
+    }
+
+    return new Response(200, {
+        ...project,
+        envVars: decodeBase64(project.envVars),
+    });
 }
 
 const deleteProject = async (event: APIGatewayProxyEvent) => {
@@ -105,6 +143,29 @@ const deleteProject = async (event: APIGatewayProxyEvent) => {
     await stopContainer(projectId);
 
     return new Response(200, project);
+}
+
+const updateEnv = async (event: APIGatewayProxyEvent) => {
+    const projectId = z.uuid().parse(event.pathParameters?.projectId);
+    const body = parseBody(event.body, z.object({
+        content: z.string().check(z.maxLength(16384)),
+    }));
+    const [project] = await database
+        .update(projects)
+        .set({ envVars: encodeBase64(normalizeEnvVars(body.content)) })
+        .where(eq(projects.id, projectId))
+        .returning();
+
+    if (!project) {
+        return new Response(404, {
+            message: 'Project not found',
+        });
+    }
+
+    return new Response(200, {
+        projectId: project.id,
+        content: decodeBase64(project.envVars),
+    });
 }
 
 const listBuilds = async (event: APIGatewayProxyEvent) => {
@@ -144,7 +205,7 @@ const createBuild = async (event: APIGatewayProxyEvent) => {
 
     const buildId = randomUUID();
     const result = await codeBuild.send(new StartBuildCommand({
-        projectName: config.codeBuildProjectName,
+        projectName: process.env.CODEBUILD_PROJECT_NAME!,
         environmentVariablesOverride: [
             {
                 name: 'REPOSITORY_URL',
@@ -164,6 +225,17 @@ const createBuild = async (event: APIGatewayProxyEvent) => {
             {
                 name: 'PORT',
                 value: String(project.port),
+                type: 'PLAINTEXT',
+            },
+            {
+                name: 'DOCKERFILE_B64',
+                value: encodeBase64(renderDockerfile({
+                    installCommand: project.installCommand,
+                    buildCommand: project.buildCommand,
+                    startCommand: project.startCommand,
+                    envVars: decodeBase64(project.envVars),
+                    containerPort: Number(process.env.CONTAINER_PORT),
+                })),
                 type: 'PLAINTEXT',
             },
         ],
@@ -290,8 +362,18 @@ exports.handler = async (event: APIGatewayProxyEvent) => {
                 return await getProject(event);
             }
 
+            if (event.requestContext.httpMethod === 'PATCH') {
+                return await updateProject(event);
+            }
+
             if (event.requestContext.httpMethod === 'DELETE') {
                 return await deleteProject(event);
+            }
+        }
+
+        if (event.requestContext.resourcePath === '/projects/{projectId}/env') {
+            if (event.requestContext.httpMethod === 'PUT') {
+                return await updateEnv(event);
             }
         }
 
