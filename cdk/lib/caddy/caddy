@@ -1,0 +1,5 @@
+import /etc/caddy/sites/*.caddy
+
+:80 {
+	respond "No application is deployed at this address" 404
+}

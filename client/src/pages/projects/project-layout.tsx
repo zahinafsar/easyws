@@ -51,6 +51,7 @@ export function ProjectLayout() {
   const tabs = [
     { to: `/projects/${projectId}`, label: 'Overview', end: true },
     { to: `/projects/${projectId}/env`, label: 'Environment', end: false },
+    { to: `/projects/${projectId}/domain`, label: 'Domain', end: false },
     { to: `/projects/${projectId}/settings`, label: 'Settings', end: false },
   ]
 

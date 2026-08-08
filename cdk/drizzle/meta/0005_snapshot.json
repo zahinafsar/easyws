@@ -1,0 +1,191 @@
+{
+  "id": "88c1d6b1-7145-48b5-86d2-183fe0750df8",
+  "prevId": "4ee53253-2a26-4c3d-8ee7-01c064152d87",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.builds": {
+      "name": "builds",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "codebuild_build_id": {
+          "name": "codebuild_build_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "builds_project_id_projects_id_fk": {
+          "name": "builds_project_id_projects_id_fk",
+          "tableFrom": "builds",
+          "tableTo": "projects",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "builds_codebuild_build_id_unique": {
+          "name": "builds_codebuild_build_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "codebuild_build_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.projects": {
+      "name": "projects",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "repository_url": {
+          "name": "repository_url",
+          "type": "varchar(2048)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "port": {
+          "name": "port",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "projects_port_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "30000",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "subdomain": {
+          "name": "subdomain",
+          "type": "varchar(63)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()::text"
+        },
+        "env_vars": {
+          "name": "env_vars",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "install_command": {
+          "name": "install_command",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'npm install'"
+        },
+        "build_command": {
+          "name": "build_command",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'npm run build'"
+        },
+        "start_command": {
+          "name": "start_command",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'npm start'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "projects_port_unique": {
+          "name": "projects_port_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "port"
+          ]
+        },
+        "projects_subdomain_unique": {
+          "name": "projects_subdomain_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "subdomain"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

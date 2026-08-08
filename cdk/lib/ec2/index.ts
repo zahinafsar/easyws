@@ -12,6 +12,7 @@ export class Ec2HostStack extends cdk.Stack {
     static readonly PortRangeStart = 30000;
     static readonly PortRangeEnd = 39999;
     static readonly ContainerPort = 3000;
+    static readonly AppsDomain = 'amjam.fun';
 
     readonly instance: Ec2.Instance;
     readonly elasticIp: Ec2.CfnEIP;
@@ -41,6 +42,24 @@ export class Ec2HostStack extends cdk.Stack {
             'Application containers',
         );
 
+        securityGroup.addIngressRule(
+            Ec2.Peer.anyIpv4(),
+            Ec2.Port.tcp(22),
+            'Caddy SSH',
+        );
+
+        securityGroup.addIngressRule(
+            Ec2.Peer.anyIpv4(),
+            Ec2.Port.tcp(80),
+            'Caddy HTTP and ACME challenges',
+        );
+
+        securityGroup.addIngressRule(
+            Ec2.Peer.anyIpv4(),
+            Ec2.Port.tcp(443),
+            'Caddy HTTPS',
+        );
+
         const role = new Iam.Role(this, 'HostRole', {
             assumedBy: new Iam.ServicePrincipal('ec2.amazonaws.com'),
             managedPolicies: [
@@ -62,12 +81,6 @@ export class Ec2HostStack extends cdk.Stack {
             resources: [props.repository.repositoryArn],
         }));
 
-        const userData = Ec2.UserData.forLinux();
-        userData.addCommands(
-            'dnf install -y docker',
-            'systemctl enable --now docker',
-        );
-
         this.instance = new Ec2.Instance(this, 'Host', {
             vpc,
             vpcSubnets: { subnetType: Ec2.SubnetType.PUBLIC },
@@ -75,7 +88,6 @@ export class Ec2HostStack extends cdk.Stack {
             machineImage: Ec2.MachineImage.latestAmazonLinux2023(),
             securityGroup,
             role,
-            userData,
             blockDevices: [{
                 deviceName: '/dev/xvda',
                 volume: Ec2.BlockDeviceVolume.ebs(20, {

@@ -30,7 +30,7 @@ export function AppShell() {
               />
             )}
           </NavLink>
-          <NavLink to="/s3" className="contents">
+          {/* <NavLink to="/s3" className="contents">
             {({ isActive }) => (
               <SidebarItem
                 icon={<Database className="h-4 w-4" />}
@@ -38,7 +38,13 @@ export function AppShell() {
                 active={isActive || pathname.startsWith('/s3')}
               />
             )}
-          </NavLink>
+          </NavLink> */}
+          <div className="opacity-60 pointer-events-none">
+            <SidebarItem
+              icon={<Database className="h-4 w-4" />}
+              label="Storage (Coming Soon)"
+            />
+          </div>
           <div className="opacity-60 pointer-events-none">
             <SidebarItem
               icon={<Zap className="h-4 w-4" />}

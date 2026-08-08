@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { integer, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 
 export const projects = pgTable('projects', {
@@ -8,6 +9,10 @@ export const projects = pgTable('projects', {
         .generatedByDefaultAsIdentity({ startWith: 30000 })
         .notNull()
         .unique(),
+    subdomain: varchar('subdomain', { length: 63 })
+        .notNull()
+        .unique()
+        .default(sql`gen_random_uuid()::text`),
     envVars: text('env_vars').notNull().default(''),
     installCommand: varchar('install_command', { length: 512 })
         .notNull()

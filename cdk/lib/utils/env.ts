@@ -1,6 +1,11 @@
 const envVariablePattern = /^[A-Za-z_][A-Za-z0-9_]*=/;
 const reservedKeys = ['PORT'];
 
+export const required = (value?: string) => {
+    if (!value) throw new Error("Missing env");
+    return value
+}
+
 export const normalizeEnvVars = (content: string) => {
     const normalized = content.replace(/\r\n?/g, '\n');
     const entries = normalized

@@ -8,6 +8,7 @@ import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as path from 'path';
 import { CodeBuildStack } from '../../codebuild';
 import { Ec2HostStack } from '../../ec2';
+import { required } from '../../utils/env';
 
 export interface ProjectLambdaStackProps extends cdk.StackProps {
     buildProject: CodeBuild.IProject;
@@ -25,10 +26,11 @@ export class ProjectLambdaStack extends cdk.Stack {
             entry: path.join(__dirname, 'project.ts'),
             handler: 'handler',
             environment: {
-                DATABASE_URL: process.env.DATABASE_URL!,
+                DATABASE_URL: required(process.env.DATABASE_URL),
                 INSTANCE_ID: props.hostInstance.instanceId,
                 CODEBUILD_PROJECT_NAME: CodeBuildStack.ProjectName,
                 CONTAINER_PORT: String(Ec2HostStack.ContainerPort),
+                APPS_DOMAIN: Ec2HostStack.AppsDomain,
             },
         })
 

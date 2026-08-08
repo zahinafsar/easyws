@@ -12,6 +12,9 @@ export class ProjectApi {
         project.addMethod('PATCH', new LambdaIntegration(handler))
         project.addMethod('DELETE', new LambdaIntegration(handler))
 
+        const domain = project.addResource('domain');
+        domain.addMethod('PUT', new LambdaIntegration(handler))
+
         const env = project.addResource('env');
         env.addMethod('PUT', new LambdaIntegration(handler))
 

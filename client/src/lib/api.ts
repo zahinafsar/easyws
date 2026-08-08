@@ -40,7 +40,10 @@ export type ProjectSettings = {
 export type ProjectDetail = Project &
   ProjectSettings & {
     envVars: string
+    subdomain: string
   }
+
+export const appsDomain = import.meta.env.VITE_APPS_DOMAIN ?? 'amjam.fun'
 
 export type BuildStepStatus = 'pending' | 'in_progress' | 'succeeded' | 'failed'
 
@@ -147,6 +150,12 @@ export const api = {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(settings),
+    }),
+  updateProjectDomain: (projectId: string, subdomain: string) =>
+    request<ProjectDetail>(`${projectPath(projectId)}/domain`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subdomain }),
     }),
   updateProjectEnv: (projectId: string, content: string) =>
     request<{ projectId: string; content: string }>(

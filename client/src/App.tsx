@@ -8,6 +8,7 @@ import { ProjectLayout } from '@/pages/projects/project-layout'
 import { ProjectPage } from '@/pages/projects/project-page'
 import { ProjectEnvPage } from '@/pages/projects/project-env-page'
 import { ProjectSettingsPage } from '@/pages/projects/project-settings-page'
+import { ProjectDomainPage } from '@/pages/projects/project-domain-page'
 import { BuildPage } from '@/pages/projects/build-page'
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="projects/:projectId" element={<ProjectLayout />}>
           <Route index element={<ProjectPage />} />
           <Route path="env" element={<ProjectEnvPage />} />
+          <Route path="domain" element={<ProjectDomainPage />} />
           <Route path="settings" element={<ProjectSettingsPage />} />
         </Route>
         <Route path="projects/:projectId/builds/:buildId" element={<BuildPage />} />

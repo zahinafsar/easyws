@@ -1,10 +1,9 @@
 import { Link, useParams } from 'react-router-dom'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { ArrowLeft, ChevronRight, ExternalLink, RefreshCw } from 'lucide-react'
+import { ArrowLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import { BuildSteps } from '@/components/build-steps'
 import { activeBuildStatuses, BuildStatus } from '@/components/build-status'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/lib/api'
 import { formatDateTime, formatDuration, getRepositoryName } from '@/lib/builds'
@@ -37,6 +36,12 @@ export function BuildPage() {
     refetchInterval: isActive ? 3000 : false,
   })
   const logEvents = logs.data?.pages.flatMap(page => page.events) ?? []
+  // const { hasNextPage, isFetchingNextPage, fetchNextPage } = logs
+
+  // useEffect(() => {
+  //   if (!hasNextPage || isFetchingNextPage) return
+  //   fetchNextPage()
+  // }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   return (
     <div className="mx-auto max-w-6xl p-8">
@@ -109,17 +114,6 @@ export function BuildPage() {
 
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Steps</h2>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => logs.refetch()}
-          disabled={logs.isRefetching}
-        >
-          <RefreshCw
-            className={logs.isRefetching ? 'animate-spin' : undefined}
-          />
-          Refresh
-        </Button>
       </div>
 
       {build.isLoading ? (
@@ -132,18 +126,6 @@ export function BuildPage() {
         <BuildSteps steps={build.data?.steps ?? []} events={logEvents} />
       )}
 
-      {logs.hasNextPage ? (
-        <div className="pt-3">
-          <Button
-            variant="outline"
-            size="sm"
-            loading={logs.isFetchingNextPage}
-            onClick={() => logs.fetchNextPage()}
-          >
-            Load more output
-          </Button>
-        </div>
-      ) : null}
     </div>
   )
 }

@@ -7,11 +7,15 @@ import { ProjectLambdaStack } from './lambda/project';
 import { CodeBuildStack } from './codebuild';
 import { ECRStack } from './ecr';
 import { Ec2HostStack } from './ec2';
+import { CaddyStack } from './caddy/stack';
 
 const app = new cdk.App();
 const ecr = new ECRStack(app, 'ECR');
 const ec2Host = new Ec2HostStack(app, 'Ec2HostStack', {
     repository: ecr.repository
+});
+new CaddyStack(app, 'CaddyStack', {
+    hostInstance: ec2Host.instance,
 });
 const codeBuild = new CodeBuildStack(app, 'CodeBuildStack', {
     repository: ecr.repository,
