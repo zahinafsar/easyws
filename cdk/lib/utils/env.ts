@@ -7,4 +7,7 @@ const required = (data?: string) => {
 export const config = {
     databaseUrl: required(process.env.DATABASE_URL),
     codeBuildProjectName: 'easyws-project-builder',
+    appPortRangeStart: 30000,
+    appPortRangeEnd: 39999,
+    containerPort: 3000,
 }

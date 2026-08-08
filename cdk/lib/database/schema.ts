@@ -1,9 +1,13 @@
-import { pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { integer, pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 
 export const projects = pgTable('projects', {
     id: uuid('id').defaultRandom().primaryKey(),
     name: varchar('name', { length: 255 }).notNull(),
     repositoryUrl: varchar('repository_url', { length: 2048 }).notNull(),
+    port: integer('port')
+        .generatedByDefaultAsIdentity({ startWith: 30000 })
+        .notNull()
+        .unique(),
 });
 
 export const builds = pgTable('builds', {

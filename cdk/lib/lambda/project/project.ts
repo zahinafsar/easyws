@@ -11,6 +11,7 @@ import {
     CloudWatchLogsServiceException,
     GetLogEventsCommand,
 } from '@aws-sdk/client-cloudwatch-logs';
+import { SendCommandCommand, SSMClient, SSMServiceException } from '@aws-sdk/client-ssm';
 import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod/mini';
 import { database } from '../../database';
@@ -20,6 +21,22 @@ import { config } from '../../utils/env';
 
 const codeBuild = new CodeBuildClient({});
 const cloudWatchLogs = new CloudWatchLogsClient({});
+const ssm = new SSMClient({});
+
+const stopContainer = async (projectId: string) => {
+    try {
+        await ssm.send(new SendCommandCommand({
+            InstanceIds: [config.hostInstanceId],
+            DocumentName: 'AWS-RunShellScript',
+            Comment: `easyws teardown ${projectId}`,
+            Parameters: {
+                commands: [`docker rm -f app-${projectId} 2>/dev/null || true`],
+            },
+        }));
+    } catch (error) {
+        console.error('Failed to stop container', projectId, error);
+    }
+}
 
 const findProject = async (projectId: string) => {
     const [project] = await database
@@ -85,6 +102,8 @@ const deleteProject = async (event: APIGatewayProxyEvent) => {
         });
     }
 
+    await stopContainer(projectId);
+
     return new Response(200, project);
 }
 
@@ -135,6 +154,16 @@ const createBuild = async (event: APIGatewayProxyEvent) => {
             {
                 name: 'IMAGE_TAG',
                 value: buildId,
+                type: 'PLAINTEXT',
+            },
+            {
+                name: 'PROJECT_ID',
+                value: projectId,
+                type: 'PLAINTEXT',
+            },
+            {
+                name: 'PORT',
+                value: String(project.port),
                 type: 'PLAINTEXT',
             },
         ],
@@ -294,7 +323,8 @@ exports.handler = async (event: APIGatewayProxyEvent) => {
     } catch (error) {
         if (
             error instanceof CodeBuildServiceException ||
-            error instanceof CloudWatchLogsServiceException
+            error instanceof CloudWatchLogsServiceException ||
+            error instanceof SSMServiceException
         ) {
             return new Response(error.$metadata.httpStatusCode ?? 500, {
                 message: error.message,
