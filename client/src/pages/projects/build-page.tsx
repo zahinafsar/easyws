@@ -1,19 +1,13 @@
 import { Link, useParams } from 'react-router-dom'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { ArrowLeft, ChevronRight, ExternalLink, RefreshCw } from 'lucide-react'
+import { BuildSteps } from '@/components/build-steps'
 import { activeBuildStatuses, BuildStatus } from '@/components/build-status'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/lib/api'
 import { formatDateTime, formatDuration, getRepositoryName } from '@/lib/builds'
-
-const logTimeFormatter = new Intl.DateTimeFormat(undefined, {
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-  hour12: false,
-})
 
 export function BuildPage() {
   const { projectId = '', buildId = '' } = useParams()
@@ -114,7 +108,7 @@ export function BuildPage() {
       ) : null}
 
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Logs</h2>
+        <h2 className="text-lg font-semibold">Steps</h2>
         <Button
           variant="outline"
           size="sm"
@@ -128,49 +122,28 @@ export function BuildPage() {
         </Button>
       </div>
 
-      <div className="max-h-[65vh] min-h-96 overflow-auto rounded-md border border-border bg-muted p-4 font-mono text-xs">
-        {logs.isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-5/6" />
-          </div>
-        ) : logEvents.length ? (
-          <div className="space-y-1">
-            {logEvents.map((event, index) => (
-              <div
-                key={`${event.timestamp ?? 'event'}-${index}`}
-                className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3"
-              >
-                <span className="text-muted-foreground">
-                  {event.timestamp
-                    ? logTimeFormatter.format(event.timestamp)
-                    : '--:--:--'}
-                </span>
-                <span className="whitespace-pre-wrap break-words">
-                  {event.message}
-                </span>
-              </div>
-            ))}
-            {logs.hasNextPage ? (
-              <div className="pt-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  loading={logs.isFetchingNextPage}
-                  onClick={() => logs.fetchNextPage()}
-                >
-                  Load more
-                </Button>
-              </div>
-            ) : null}
-          </div>
-        ) : (
-          <div className="flex min-h-80 items-center justify-center text-muted-foreground">
-            {isActive ? 'Waiting for build output…' : 'No log output.'}
-          </div>
-        )}
-      </div>
+      {build.isLoading ? (
+        <div className="space-y-2">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
+      ) : (
+        <BuildSteps steps={build.data?.steps ?? []} events={logEvents} />
+      )}
+
+      {logs.hasNextPage ? (
+        <div className="pt-3">
+          <Button
+            variant="outline"
+            size="sm"
+            loading={logs.isFetchingNextPage}
+            onClick={() => logs.fetchNextPage()}
+          >
+            Load more output
+          </Button>
+        </div>
+      ) : null}
     </div>
   )
 }

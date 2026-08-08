@@ -19,6 +19,7 @@ import { builds, projects } from '../../database/schema';
 import { SsmService } from '../../service/ssm';
 import { parseBody, Response } from '../../utils/api';
 import { decodeBase64, encodeBase64 } from '../../utils/base64';
+import { toBuildSteps } from '../../utils/build-steps';
 import { renderDockerfile } from '../../utils/dockerfile';
 import { normalizeEnvVars } from '../../utils/env-vars';
 
@@ -296,6 +297,7 @@ const getBuild = async (event: APIGatewayProxyEvent) => {
         status,
         createdAt: buildRecord.createdAt,
         completedAt,
+        steps: toBuildSteps(build.phases),
     });
 }
 

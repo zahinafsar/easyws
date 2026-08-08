@@ -42,12 +42,23 @@ export type ProjectDetail = Project &
     envVars: string
   }
 
+export type BuildStepStatus = 'pending' | 'in_progress' | 'succeeded' | 'failed'
+
+export type BuildStep = {
+  name: string
+  label: string
+  status: BuildStepStatus
+  startedAt?: string | null
+  completedAt?: string | null
+}
+
 export type ProjectBuild = {
   buildId: string
   projectId: string
   status: string
   createdAt: string
   completedAt?: string | null
+  steps?: BuildStep[]
 }
 
 export type BuildLogEvent = {
